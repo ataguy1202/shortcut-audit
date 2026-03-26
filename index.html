@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shortcut Audit — Spreadsheet Intelligence</title>
+  <meta name="description" content="Client-side Excel audit tool. Analyze formula dependencies, detect model risks, and score spreadsheet health.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="topbar">
+    <div class="topbar-inner">
+      <div class="logo">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect width="22" height="22" rx="5" fill="#217346"/>
+          <path d="M6 11L10 15L16 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="logo-text">Shortcut <span class="logo-accent">Audit</span></span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-badge">Prototype</span>
+        <a href="https://shortcut.ai" target="_blank" class="topbar-link">shortcut.ai</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="app">
+    <!-- ============ LANDING ============ -->
+    <section id="landing-section" class="landing-section">
+      <div class="landing-inner">
+        <div class="landing-left">
+          <div class="landing-eyebrow">Product Concept for Shortcut</div>
+          <h1 class="landing-title">Understand your spreadsheet before the AI touches it.</h1>
+          <p class="landing-body">
+            Shortcut Audit analyzes Excel files entirely in the browser. It maps every formula dependency,
+            flags hardcoded values, detects inconsistencies, and assigns a health score, giving analysts
+            full visibility into model integrity before automating with Shortcut.
+          </p>
+          <div class="landing-features">
+            <div class="landing-feature">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#217346" stroke-width="1.5"/><path d="M5.5 9.5L8 12l4.5-6" stroke="#217346" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Formula dependency graph</span>
+            </div>
+            <div class="landing-feature">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#217346" stroke-width="1.5"/><path d="M5.5 9.5L8 12l4.5-6" stroke="#217346" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Risk and inconsistency detection</span>
+            </div>
+            <div class="landing-feature">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#217346" stroke-width="1.5"/><path d="M5.5 9.5L8 12l4.5-6" stroke="#217346" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Quantified model health score</span>
+            </div>
+            <div class="landing-feature">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#217346" stroke-width="1.5"/><path d="M5.5 9.5L8 12l4.5-6" stroke="#217346" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Zero data leaves the browser</span>
+            </div>
+          </div>
+          <div class="landing-actions">
+            <div id="drop-zone" class="drop-zone">
+              <div class="drop-zone-inner">
+                <svg class="drop-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#217346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="drop-label">Drop .xlsx here or <label for="file-input" class="file-browse">browse</label></span>
+                <input type="file" id="file-input" accept=".xlsx,.xls,.csv" hidden>
+              </div>
+            </div>
+            <button id="load-demo" class="btn-demo">Try with sample 3-statement model</button>
+          </div>
+        </div>
+        <div class="landing-right">
+          <div class="preview-card">
+            <div class="preview-header">
+              <span class="preview-dot red"></span>
+              <span class="preview-dot amber"></span>
+              <span class="preview-dot green"></span>
+              <span class="preview-title">Financial_Model.xlsx</span>
+            </div>
+            <div class="preview-body" id="preview-animation">
+              <svg id="preview-graph" width="100%" height="100%" viewBox="0 0 360 260"></svg>
+            </div>
+            <div class="preview-footer">
+              <span class="preview-stat"><strong>72</strong> formulas</span>
+              <span class="preview-stat"><strong>4</strong> sheets</span>
+              <span class="preview-stat score-pill"><strong>87</strong>/100</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="landing-context">
+        <p>
+          This prototype explores how pre-analysis could complement Shortcut's AI agent. By surfacing
+          model structure and risks upfront, analysts gain confidence before handing control to automation.
+          Built with D3.js and SheetJS. Entirely client-side.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section id="dashboard-section" class="dashboard-section hidden">
+      <div class="dashboard-header">
+        <div class="dashboard-header-left">
+          <button id="back-btn" class="btn-back" aria-label="Back">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Back
+          </button>
+          <h2 id="file-name" class="file-title"></h2>
+        </div>
+        <div class="dashboard-header-right">
+          <button id="export-btn" class="btn-secondary">Export Report</button>
+        </div>
+      </div>
+
+      <!-- Score -->
+      <div class="score-strip">
+        <div class="score-card score-card-hero">
+          <div class="score-ring-wrap">
+            <svg class="score-ring" viewBox="0 0 88 88">
+              <circle cx="44" cy="44" r="38" fill="none" stroke="#e8e8e8" stroke-width="5"/>
+              <circle id="score-ring-fill" cx="44" cy="44" r="38" fill="none" stroke="#217346" stroke-width="5"
+                stroke-dasharray="238.76" stroke-dashoffset="238.76" stroke-linecap="round"
+                transform="rotate(-90 44 44)"/>
+            </svg>
+            <span id="health-score" class="score-number">--</span>
+          </div>
+          <div class="score-detail">
+            <span class="score-title">Model Health</span>
+            <span id="health-grade" class="score-grade">--</span>
+          </div>
+        </div>
+        <div class="score-card"><span id="stat-formulas" class="metric-val">--</span><span class="metric-label">Formulas</span></div>
+        <div class="score-card"><span id="stat-cells" class="metric-val">--</span><span class="metric-label">Data Cells</span></div>
+        <div class="score-card"><span id="stat-sheets" class="metric-val">--</span><span class="metric-label">Sheets</span></div>
+        <div class="score-card"><span id="stat-xsheet" class="metric-val">--</span><span class="metric-label">Cross-sheet Links</span></div>
+        <div class="score-card"><span id="stat-errors" class="metric-val">--</span><span class="metric-label">Issues</span></div>
+        <div class="score-card"><span id="stat-depth" class="metric-val">--</span><span class="metric-label">Max Chain Depth</span></div>
+      </div>
+
+      <!-- Grid -->
+      <div class="dashboard-grid">
+        <!-- Graph -->
+        <div class="panel panel-graph">
+          <div class="panel-bar">
+            <h3>Dependency Graph</h3>
+            <div class="panel-controls">
+              <select id="sheet-filter" class="ctrl-select"><option value="__all__">All sheets</option></select>
+              <button id="reset-zoom" class="ctrl-btn" title="Reset view">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1v4h4M13 13V9H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.1 5.5A5.5 5.5 0 0 0 2.3 3.3L1 5M1.9 8.5a5.5 5.5 0 0 0 9.8 2.2L13 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <div id="graph-container" class="graph-viewport">
+            <div id="graph-empty" class="graph-empty"><p>No formula dependencies to display.</p></div>
+          </div>
+          <div class="graph-legend">
+            <span class="legend-item"><span class="ldot" style="background:#217346"></span>Formula cell</span>
+            <span class="legend-item"><span class="ldot" style="background:#666"></span>Input cell</span>
+            <span class="legend-item"><span class="ldot" style="background:#c0392b"></span>Error</span>
+            <span class="legend-item"><span class="lline"></span>Dependency</span>
+          </div>
+        </div>
+
+        <!-- Issues -->
+        <div class="panel panel-issues">
+          <div class="panel-bar">
+            <h3>Audit Findings</h3>
+            <div id="issue-counts" class="issue-badges"></div>
+          </div>
+          <div id="issues-list" class="issues-scroll"></div>
+        </div>
+
+        <!-- Sheets -->
+        <div class="panel panel-sheets">
+          <div class="panel-bar"><h3>Sheet Breakdown</h3></div>
+          <div id="sheet-breakdown" class="sheet-list"></div>
+        </div>
+
+        <!-- Complexity -->
+        <div class="panel panel-complexity">
+          <div class="panel-bar"><h3>Complexity Map</h3></div>
+          <div id="complexity-map" class="complexity-map"></div>
+        </div>
+
+        <!-- Functions -->
+        <div class="panel panel-functions">
+          <div class="panel-bar"><h3>Function Distribution</h3></div>
+          <div id="function-chart" class="func-chart"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>Built as a product concept for <a href="https://shortcut.ai" target="_blank">Shortcut</a>.
+      All analysis runs client-side. No data is transmitted.</p>
+    </div>
+  </footer>
+
+  <script src="audit.js"></script>
+</body>
+</html>
